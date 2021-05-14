@@ -1,6 +1,9 @@
 # pipe-cutter
 Command line tool to filter out some of the data piped in
 
+[![Rust](https://github.com/juan-leon/pipe-cutter/actions/workflows/test.yml/badge.svg)](https://github.com/juan-leon/pipe-cutter/actions/workflows/test.yml)
+[![dependency status](https://deps.rs/repo/github/juan-leon/pipe-cutter/status.svg)](https://deps.rs/repo/github/juan-leon/pipe-cutter)
+
 ## What does pipe-cutter?
 
 pipe-cutter is a tool to use as pipe to limit what is read from stdin (in time
