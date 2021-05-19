@@ -69,10 +69,9 @@ fn main() {
     let timeout = Duration::from_millis(250);
     let mut buffer = [0; 4096];
     let mut remaining_bytes = opts.bytes;
-    let target = match opts.seconds {
-        Some(s) => Some(SystemTime::now() + Duration::new(s, 0)),
-        None => None,
-    };
+    let target = opts
+        .seconds
+        .map(|s| SystemTime::now() + Duration::new(s, 0));
 
     let mut reader = if let Some(path) = opts.tail {
         get_file_reader(&path, timeout)
