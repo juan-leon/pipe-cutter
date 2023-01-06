@@ -1,6 +1,6 @@
 [package]
 name = "pipe-cutter"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["JuanLeon Lahoz <juanleon.lahoz@gmail.com>"]
 edition = "2018"
 description = "Command line tool to filter out some of the data piped in"
@@ -9,4 +9,4 @@ description = "Command line tool to filter out some of the data piped in"
 
 [dependencies]
 timeout-readwrite = "*"
-clap = "3.0.0-beta.2"
+clap = { version = "^4", features = ["derive", "cargo"] }

@@ -1,3 +1,5 @@
+#![warn(clippy::all, clippy::pedantic, clippy::nursery)]
+
 use std::fs::File;
 use std::io;
 use std::io::Read;
@@ -8,7 +10,7 @@ use std::thread;
 use std::time::Duration;
 use std::time::SystemTime;
 
-use clap::{AppSettings, Clap};
+use clap::Parser;
 use timeout_readwrite::TimeoutReader;
 
 /// Tool to use as pipe to limit what is read from stdin (in time or size).
@@ -17,8 +19,8 @@ use timeout_readwrite::TimeoutReader;
 ///
 /// Example: `tail -f nginx.log gnunicorn.log | pipe-cutter --bytes 300`
 ///
-#[derive(Clap)]
-#[clap(setting = AppSettings::ColoredHelp)]
+#[derive(Parser)]
+#[command(author, version, about)]
 struct Opts {
     /// Stop reading after that many seconds
     #[clap(long)]
@@ -33,22 +35,22 @@ struct Opts {
 }
 
 fn get_file_reader(path: &str, timeout: Duration) -> Box<dyn Read> {
-    let mut file = match File::open(&path) {
+    let mut file = match File::open(path) {
         Ok(f) => f,
         Err(error) => {
-            eprintln!("Could not open file {}: {}", path, error);
+            eprintln!("Could not open file {path}: {error}");
             std::process::exit(1);
         }
     };
     let metadata = match file.metadata() {
         Ok(m) => m,
         Err(error) => {
-            eprintln!("Could not read file metadata: {}", error);
+            eprintln!("Could not read file metadata: {error}");
             std::process::exit(1);
         }
     };
     if let Err(error) = file.seek(SeekFrom::Start(metadata.len())) {
-        eprintln!("Could not jump to end of file: {}", error);
+        eprintln!("Could not jump to end of file: {error}");
         std::process::exit(1);
     };
     Box::new(TimeoutReader::new(file, timeout))
@@ -73,19 +75,12 @@ fn main() {
         .seconds
         .map(|s| SystemTime::now() + Duration::new(s, 0));
 
-    let mut reader = if let Some(path) = opts.tail {
-        get_file_reader(&path, timeout)
-    } else {
-        get_stdin_reader(timeout)
-    };
+    let mut reader = opts.tail.map_or_else(
+        || get_stdin_reader(timeout),
+        |path| get_file_reader(&path, timeout),
+    );
 
-    let done = || {
-        if let Some(time) = target {
-            SystemTime::now() > time
-        } else {
-            false
-        }
-    };
+    let done = || target.map_or(false, |time| SystemTime::now() > time);
 
     loop {
         match reader.read(&mut buffer) {
@@ -105,7 +100,7 @@ fn main() {
                     }
                 }
                 if let Err(error) = io::stdout().write_all(&buffer[..to_print]) {
-                    eprintln!("Write error: {}", error);
+                    eprintln!("Write error: {error}");
                     std::process::exit(1);
                 }
                 if let Some(bytes) = remaining_bytes {
@@ -121,7 +116,7 @@ fn main() {
                 }
             }
             Err(error) => {
-                eprintln!("Read error: {}", error);
+                eprintln!("Read error: {error}");
                 std::process::exit(1);
             }
         }
